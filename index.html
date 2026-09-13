@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>सड़क लागत कैलकुलेटर | Road Cost Calculator India</title>
+<meta name="description" content="India mein road construction ki transparent cost calculate karein. PWD/MORTH 2024-25 rates ke hisaab se material, labour, machinery sab ka breakdown.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+<style>
+  :root {
+    --primary: #0f172a;
+    --primary-dark: #1e293b;
+    --primary-light: #fff7ed;
+    --danger: #c81e1e;
+    --danger-light: #fde8e8;
+    --success: #057a55;
+    --success-light: #def7ec;
+    --warning: #8e4b10;
+    --warning-light: #fdf3e3;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-700: #374151;
+    --gray-900: #111827;
+    --radius: 10px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--gray-50); color: var(--gray-900); font-size: 15px; line-height: 1.6; }
+
+  /* HEADER */
+  header { background: #0f172a; color: white; padding: 0; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-md); }
+  .header-inner { max-width: 900px; margin: 0 auto; padding: 0.9rem 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .logo-icon { width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .header-title { font-size: 16px; font-weight: 600; line-height: 1.2; }
+  .header-sub { font-size: 11px; opacity: 0.8; }
+  .lang-toggle { display: flex; background: rgba(255,255,255,0.15); border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.3); flex-shrink: 0; }
+  .lang-btn { padding: 5px 14px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; background: transparent; color: white; transition: background 0.2s; }
+  .lang-btn.active { background: #f97316; color: white; border-radius: 20px; }
+
+  /* MAIN */
+  main { max-width: 900px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+
+  /* HERO BANNER */
+  .hero { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; border-radius: 14px; padding: 1.5rem 1.75rem; margin-bottom: 1.5rem; position: relative; overflow: hidden; border-left: 4px solid #f97316; }
+  .hero::after { content: '🛣️'; position: absolute; right: 1.5rem; top: 50%; transform: translateY(-50%); font-size: 60px; opacity: 0.15; }
+  .hero h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .hero p { font-size: 13px; opacity: 0.88; max-width: 560px; line-height: 1.6; }
+  .hero-badges { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .hero-badge { background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3); border-radius: 20px; padding: 3px 12px; font-size: 12px; }
+
+  /* CARD */
+  .card { background: white; border-radius: var(--radius); border: 1px solid var(--gray-200); padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; box-shadow: var(--shadow); }
+  .card-title { font-size: 14px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; display: flex; align-items: center; gap: 6px; }
+
+  /* FORM */
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media(max-width: 540px) { .field-grid { grid-template-columns: 1fr; } }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 13px; font-weight: 500; color: var(--gray-700); }
+  .field input, .field select {
+    padding: 9px 12px; border: 1.5px solid var(--gray-200); border-radius: 8px;
+    font-size: 14px; color: var(--gray-900); background: white;
+    transition: border-color 0.2s; outline: none; width: 100%;
+  }
+  .field input:focus, .field select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(26,86,219,0.1); }
+
+  /* RESULT CARDS */
+  .result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.25rem; }
+  @media(max-width: 540px) { .result-grid { grid-template-columns: 1fr; } }
+  .rcard { background: white; border-radius: var(--radius); border: 1px solid var(--gray-200); padding: 1rem 1.1rem; box-shadow: var(--shadow); }
+  .rcard.highlight { background: #fff7ed; border-color: #fed7aa; }
+  .rcard .rl { font-size: 12px; color: var(--gray-500); margin-bottom: 4px; }
+  .rcard .rv { font-size: 22px; font-weight: 700; color: var(--gray-900); line-height: 1.2; }
+  .rcard.highlight .rv { color: #f97316; }
+  .rcard .rs { font-size: 11px; color: var(--gray-400); margin-top: 3px; }
+
+  /* BREAKDOWN TABLE */
+  .breakdown { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .breakdown th { text-align: left; color: var(--gray-500); font-weight: 500; font-size: 12px; padding: 7px 10px; border-bottom: 1px solid var(--gray-200); }
+  .breakdown td { padding: 9px 10px; border-bottom: 1px solid var(--gray-100); color: var(--gray-900); vertical-align: middle; }
+  .breakdown tr:last-child td { border-bottom: none; font-weight: 600; background: var(--gray-50); }
+  .breakdown .right { text-align: right; }
+  .bar { height: 6px; border-radius: 3px; margin-top: 4px; }
+
+  /* CHART */
+  .chart-wrap { max-width: 280px; margin: 0 auto; }
+
+  /* CORRUPTION BOX */
+  .corruption { background: var(--danger-light); border: 1px solid #f5c6c6; border-radius: var(--radius); padding: 1.1rem 1.25rem; }
+  .corruption-title { font-size: 13px; font-weight: 600; color: var(--danger); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .corruption-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  @media(max-width:480px) { .corruption-grid { grid-template-columns: 1fr; } }
+  .citem { display: flex; justify-content: space-between; font-size: 12px; color: var(--danger); padding: 5px 0; border-bottom: 1px solid #f5c6c6; }
+  .citem:last-child { border-bottom: none; }
+  .corruption-note { font-size: 12px; color: var(--danger); margin-top: 10px; line-height: 1.6; }
+
+  /* ACTION BUTTONS */
+  .action-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 1.25rem; }
+  .btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.18s; text-decoration: none; }
+  .btn-primary { background: #f97316; color: white; }
+  .btn-primary:hover { background: #ea6c0a; transform: translateY(-1px); }
+  .btn-whatsapp { background: #25d366; color: white; }
+  .btn-whatsapp:hover { background: #1da851; transform: translateY(-1px); }
+  .btn-outline { background: white; color: var(--gray-700); border: 1.5px solid var(--gray-300); }
+  .btn-outline:hover { background: var(--gray-50); border-color: var(--gray-400); }
+
+  /* RTI SECTION */
+  .rti-box { background: var(--warning-light); border: 1px solid #f9d4a7; border-radius: var(--radius); padding: 1.1rem 1.25rem; }
+  .rti-title { font-size: 13px; font-weight: 600; color: var(--warning); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .rti-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  @media(max-width:480px) { .rti-fields { grid-template-columns: 1fr; } }
+  .rti-fields input { padding: 8px 10px; border: 1px solid #f9d4a7; border-radius: 7px; font-size: 13px; width: 100%; outline: none; background: white; }
+  .rti-fields input:focus { border-color: var(--warning); }
+  .rti-template { background: white; border: 1px solid #f9d4a7; border-radius: 8px; padding: 1rem; font-size: 13px; line-height: 1.8; color: var(--gray-700); white-space: pre-wrap; font-family: 'Courier New', monospace; max-height: 300px; overflow-y: auto; }
+
+  /* DISCLAIMER */
+  .disclaimer { background: var(--gray-100); border-radius: 8px; padding: 0.9rem 1rem; font-size: 12px; color: var(--gray-500); line-height: 1.6; margin-top: 1.25rem; }
+
+  /* FOOTER */
+  footer { text-align: center; padding: 1.5rem; font-size: 12px; color: var(--gray-400); border-top: 1px solid var(--gray-200); margin-top: 2rem; }
+
+  /* RESPONSIVE */
+  @media(max-width:600px) {
+    .hero h1 { font-size: 18px; }
+    .card { padding: 1rem; }
+    .header-title { font-size: 14px; }
+  }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  @media(max-width:640px) { .two-col { grid-template-columns: 1fr; } }
+
+  .section-divider { border: none; border-top: 1px solid var(--gray-200); margin: 0.25rem 0 1rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-left">
+      <svg width="42" height="42" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="56" height="56" rx="12" fill="#1e293b"/>
+        <polygon points="4,50 22,14 34,14 52,50" fill="#374151"/>
+        <polygon points="10,50 24,18 32,18 46,50" fill="#4b5563"/>
+        <rect x="10" y="48" width="36" height="3" rx="1.5" fill="#f97316"/>
+        <line x1="28" y1="14" x2="28" y2="50" stroke="#f97316" stroke-width="2" stroke-dasharray="3,4" stroke-linecap="round"/>
+        <line x1="4" y1="38" x2="52" y2="38" stroke="white" stroke-width="1.5" opacity="0.3"/>
+        <line x1="8" y1="28" x2="48" y2="28" stroke="white" stroke-width="1.5" opacity="0.2"/>
+        <circle cx="38" cy="16" r="9" fill="none" stroke="#f97316" stroke-width="2.5"/>
+        <line x1="44.5" y1="22.5" x2="49" y2="27" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="38" cy="16" r="3.5" fill="#f97316" opacity="0.5"/>
+      </svg>
+      <div>
+        <div class="header-title" id="h-title" style="color:white; font-size:18px; font-weight:700; letter-spacing:-0.3px;">SadakSaathi</div>
+        <div class="header-sub" id="h-sub" style="color:#f97316;">सड़क लागत जांचें • RTI करें</div>
+      </div>
+    </div>
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setLang('hi')" id="btn-hi">हिंदी</button>
+      <button class="lang-btn" onclick="setLang('en')" id="btn-en">English</button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+      <svg width="36" height="36" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="56" height="56" rx="12" fill="#1e293b"/>
+        <polygon points="4,50 22,14 34,14 52,50" fill="#374151"/>
+        <polygon points="10,50 24,18 32,18 46,50" fill="#4b5563"/>
+        <rect x="10" y="48" width="36" height="3" rx="1.5" fill="#f97316"/>
+        <line x1="28" y1="14" x2="28" y2="50" stroke="#f97316" stroke-width="2" stroke-dasharray="3,4" stroke-linecap="round"/>
+        <circle cx="38" cy="16" r="9" fill="none" stroke="#f97316" stroke-width="2.5"/>
+        <line x1="44.5" y1="22.5" x2="49" y2="27" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="38" cy="16" r="3.5" fill="#f97316" opacity="0.5"/>
+      </svg>
+      <h1 id="hero-title" style="font-size:22px; font-weight:700; margin:0;">सड़क निर्माण लागत पारदर्शिता</h1>
+    </div>
+    <p id="hero-desc">भ्रष्टाचार रोकें — जानें आपके क्षेत्र की सड़क में वास्तव में कितना खर्च होना चाहिए। सरकारी दरों के आधार पर सटीक अनुमान।</p>
+    <div class="hero-badges">
+      <span class="hero-badge" id="hb1" style="border-color:#f97316; color:#f97316; background:rgba(249,115,22,0.1);">✅ MORTH 2024-25 दरें</span>
+      <span class="hero-badge" id="hb2" style="border-color:#f97316; color:#f97316; background:rgba(249,115,22,0.1);">✅ RTI टेम्पलेट</span>
+      <span class="hero-badge" id="hb3" style="border-color:#f97316; color:#f97316; background:rgba(249,115,22,0.1);">✅ PDF डाउनलोड</span>
+      <span class="hero-badge" id="hb4" style="border-color:#f97316; color:#f97316; background:rgba(249,115,22,0.1);">✅ बिल्कुल मुफ़्त</span>
+    </div>
+  </div>
+
+  <!-- FORM -->
+  <div class="card">
+    <div class="card-title" id="form-title">📐 सड़क की जानकारी दर्ज करें</div>
+    <div class="field-grid">
+      <div class="field">
+        <label id="lbl-len">लंबाई (किमी)</label>
+        <input type="number" id="length" value="2" min="0.1" max="500" step="0.1">
+      </div>
+      <div class="field">
+        <label id="lbl-wid">चौड़ाई (मीटर)</label>
+        <input type="number" id="width" value="7" min="3" max="60" step="0.5">
+      </div>
+      <div class="field">
+        <label id="lbl-type">सड़क का प्रकार</label>
+        <select id="roadtype">
+          <option value="wbm" id="opt-wbm">WBM / गिट्टी सड़क (ग्रामीण)</option>
+          <option value="bitumin2l" selected id="opt-b2">बिटुमिनस 2-लेन (सामान्य)</option>
+          <option value="bitumin4l" id="opt-b4">बिटुमिनस 4-लेन (हाईवे)</option>
+          <option value="concrete2l" id="opt-c2">कंक्रीट 2-लेन</option>
+          <option value="concrete4l" id="opt-c4">कंक्रीट 4-लेन</option>
+          <option value="urban" id="opt-urban">शहरी CC सड़क (नाली + फुटपाथ सहित)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label id="lbl-terrain">भूमि का प्रकार</label>
+        <select id="terrain">
+          <option value="plain" id="opt-plain">समतल / मैदानी</option>
+          <option value="rolling" id="opt-rolling">अर्ध-पहाड़ी</option>
+          <option value="hilly" id="opt-hilly">पहाड़ी / कठिन</option>
+        </select>
+      </div>
+      <div class="field">
+        <label id="lbl-state">राज्य / क्षेत्र</label>
+        <select id="state">
+          <option value="north" id="opt-north">उत्तर भारत (UP, Bihar, Haryana, Punjab)</option>
+          <option value="south" id="opt-south">दक्षिण भारत (TN, AP, Karnataka, Kerala)</option>
+          <option value="west" id="opt-west">पश्चिम भारत (Maharashtra, Gujarat, Rajasthan)</option>
+          <option value="east" id="opt-east">पूर्व भारत (WB, Odisha, Jharkhand)</option>
+          <option value="ne" id="opt-ne">उत्तर-पूर्व / J&K / पहाड़ी राज्य</option>
+        </select>
+      </div>
+      <div class="field">
+        <label id="lbl-drain">नाली / पुलिया</label>
+        <select id="drainage">
+          <option value="none" id="opt-dnone">कोई नहीं</option>
+          <option value="basic" selected id="opt-dbasic">साधारण साइड नाली</option>
+          <option value="full" id="opt-dfull">पूरी नाली + पुलिया</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results-section" style="display:none;">
+
+    <!-- SUMMARY CARDS -->
+    <div class="result-grid">
+      <div class="rcard highlight">
+        <div class="rl" id="rl-total">कुल अनुमानित लागत</div>
+        <div class="rv" id="rv-total">—</div>
+        <div class="rs" id="rs-range">—</div>
+      </div>
+      <div class="rcard">
+        <div class="rl" id="rl-perkm">प्रति किमी लागत</div>
+        <div class="rv" id="rv-perkm">—</div>
+        <div class="rs" id="rs-roadname">—</div>
+      </div>
+      <div class="rcard">
+        <div class="rl" id="rl-persqm">प्रति वर्ग मीटर</div>
+        <div class="rv" id="rv-persqm">—</div>
+        <div class="rs" id="rs-area">—</div>
+      </div>
+    </div>
+
+    <!-- BREAKDOWN + CHART -->
+    <div class="two-col">
+      <div class="card" style="margin-bottom:0;">
+        <div class="card-title" id="ct-breakdown">📊 लागत विवरण</div>
+        <table class="breakdown" id="breakdown-table">
+          <thead>
+            <tr>
+              <th id="th-item">मद</th>
+              <th class="right" id="th-amount">राशि</th>
+              <th class="right" id="th-pct">हिस्सा</th>
+            </tr>
+          </thead>
+          <tbody id="breakdown-body"></tbody>
+        </table>
+      </div>
+      <div class="card" style="margin-bottom:0;">
+        <div class="card-title" id="ct-chart">🥧 लागत वितरण</div>
+        <div class="chart-wrap">
+          <canvas id="pieChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- CORRUPTION BOX -->
+    <div class="card" style="margin-top:1.25rem;">
+      <div class="card-title" id="ct-corrupt">⚠️ भ्रष्टाचार जोखिम संकेतक</div>
+      <div class="corruption">
+        <div class="corruption-title" id="corrupt-title">⚠️ अगर पैसा गलत तरीके से खर्च हुआ तो...</div>
+        <div class="corruption-grid" id="corrupt-grid"></div>
+        <div class="corruption-note" id="corrupt-note">नागरिक इस अनुमान का उपयोग RTI दाखिल करने या सरकारी टेंडर दस्तावेज़ों की जांच के लिए कर सकते हैं। अगर वास्तविक टेंडर राशि इस अनुमान से 50% से अधिक है, तो जांच जरूरी है।</div>
+      </div>
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div class="action-row">
+      <button class="btn btn-primary" onclick="downloadPDF()" id="btn-pdf">📄 PDF डाउनलोड</button>
+      <button class="btn btn-whatsapp" onclick="shareWhatsApp()" id="btn-wa">📱 WhatsApp शेयर</button>
+      <button class="btn btn-outline" onclick="document.getElementById('rti-section').scrollIntoView({behavior:'smooth'})" id="btn-rti-scroll">📝 RTI पत्र बनाएं</button>
+    </div>
+
+    <!-- RTI SECTION -->
+    <div class="card" id="rti-section" style="margin-top:1.25rem;">
+      <div class="card-title" id="ct-rti">📝 RTI आवेदन पत्र</div>
+      <div class="rti-box">
+        <div class="rti-title" id="rti-title">🏛️ अपनी जानकारी भरें — RTI पत्र तैयार हो जाएगा</div>
+        <div class="rti-fields">
+          <input type="text" id="rti-name" placeholder="आपका नाम" oninput="generateRTI()">
+          <input type="text" id="rti-district" placeholder="जिला" oninput="generateRTI()">
+          <input type="text" id="rti-road" placeholder="सड़क का नाम / स्थान" oninput="generateRTI()">
+          <input type="text" id="rti-dept" placeholder="विभाग (PWD / NHAI / अन्य)" oninput="generateRTI()">
+        </div>
+        <div class="rti-template" id="rti-output"></div>
+        <div class="action-row" style="margin-top:10px;">
+          <button class="btn btn-outline" onclick="copyRTI()" id="btn-copy-rti">📋 RTI कॉपी करें</button>
+          <button class="btn btn-whatsapp" onclick="shareRTIWhatsApp()" id="btn-share-rti">📱 RTI WhatsApp पर भेजें</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="disclaimer" id="disclaimer-text">
+      <strong>अस्वीकरण:</strong> यह अनुमान MORTH/PWD अनुसूची दरों 2024-25 पर आधारित है। वास्तविक लागत मिट्टी की स्थिति, भूमि अधिग्रहण, उपयोगिता स्थानांतरण और स्थानीय बाजार दरों के अनुसार भिन्न हो सकती है। कोई भी औपचारिक शिकायत दर्ज करने से पहले राज्य PWD SOR से सत्यापित करें।
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div id="footer-text">🛣️ SadakSaathi • पारदर्शी भारत के लिए • MORTH दरें 2024-25</div>
+</footer>
+
+<script>
+// ==================== LANGUAGE DATA ====================
+const T = {
+  hi: {
+    'h-title': 'सड़क लागत कैलकुलेटर',
+    'h-sub': 'MORTH/PWD दरें 2024-25 • पारदर्शी अनुमान',
+    'hero-title': 'सड़क निर्माण लागत पारदर्शिता',
+    'hero-desc': 'भ्रष्टाचार रोकें — जानें आपके क्षेत्र की सड़क में वास्तव में कितना खर्च होना चाहिए। सरकारी दरों के आधार पर सटीक अनुमान।',
+    'hb1': '✅ MORTH 2024-25 दरें', 'hb2': '✅ RTI टेम्पलेट', 'hb3': '✅ PDF डाउनलोड', 'hb4': '✅ बिल्कुल मुफ़्त',
+    'form-title': '📐 सड़क की जानकारी दर्ज करें',
+    'lbl-len': 'लंबाई (किमी)', 'lbl-wid': 'चौड़ाई (मीटर)', 'lbl-type': 'सड़क का प्रकार',
+    'lbl-terrain': 'भूमि का प्रकार', 'lbl-state': 'राज्य / क्षेत्र', 'lbl-drain': 'नाली / पुलिया',
+    'opt-wbm': 'WBM / गिट्टी सड़क (ग्रामीण)', 'opt-b2': 'बिटुमिनस 2-लेन (सामान्य)',
+    'opt-b4': 'बिटुमिनस 4-लेन (हाईवे)', 'opt-c2': 'कंक्रीट 2-लेन', 'opt-c4': 'कंक्रीट 4-लेन',
+    'opt-urban': 'शहरी CC सड़क (नाली + फुटपाथ सहित)',
+    'opt-plain': 'समतल / मैदानी', 'opt-rolling': 'अर्ध-पहाड़ी', 'opt-hilly': 'पहाड़ी / कठिन',
+    'opt-north': 'उत्तर भारत (UP, Bihar, Haryana, Punjab)', 'opt-south': 'दक्षिण भारत (TN, AP, Karnataka, Kerala)',
+    'opt-west': 'पश्चिम भारत (Maharashtra, Gujarat, Rajasthan)', 'opt-east': 'पूर्व भारत (WB, Odisha, Jharkhand)',
+    'opt-ne': 'उत्तर-पूर्व / J&K / पहाड़ी राज्य',
+    'opt-dnone': 'कोई नहीं', 'opt-dbasic': 'साधारण साइड नाली', 'opt-dfull': 'पूरी नाली + पुलिया',
+    'rl-total': 'कुल अनुमानित लागत', 'rl-perkm': 'प्रति किमी लागत', 'rl-persqm': 'प्रति वर्ग मीटर',
+    'ct-breakdown': '📊 लागत विवरण', 'ct-chart': '🥧 लागत वितरण', 'ct-corrupt': '⚠️ भ्रष्टाचार जोखिम संकेतक',
+    'corrupt-title': '⚠️ अगर पैसा गलत तरीके से खर्च हुआ तो...',
+    'corrupt-note': 'नागरिक इस अनुमान का उपयोग RTI दाखिल करने या सरकारी टेंडर दस्तावेज़ों की जांच के लिए कर सकते हैं। अगर वास्तविक टेंडर राशि इस अनुमान से 50% से अधिक है, तो जांच जरूरी है।',
+    'btn-pdf': '📄 PDF डाउनलोड', 'btn-wa': '📱 WhatsApp शेयर', 'btn-rti-scroll': '📝 RTI पत्र बनाएं',
+    'ct-rti': '📝 RTI आवेदन पत्र', 'rti-title': '🏛️ अपनी जानकारी भरें — RTI पत्र तैयार हो जाएगा',
+    'btn-copy-rti': '📋 RTI कॉपी करें', 'btn-share-rti': '📱 RTI WhatsApp पर भेजें',
+    'th-item': 'मद', 'th-amount': 'राशि', 'th-pct': 'हिस्सा',
+    'footer-text': 'सड़क लागत कैलकुलेटर • पारदर्शी भारत के लिए • MORTH दरें 2024-25',
+    'disclaimer-text': '<strong>अस्वीकरण:</strong> यह अनुमान MORTH/PWD अनुसूची दरों 2024-25 पर आधारित है। वास्तविक लागत मिट्टी की स्थिति, भूमि अधिग्रहण, उपयोगिता स्थानांतरण और स्थानीय बाजार दरों के अनुसार भिन्न हो सकती है।',
+    items: ['सामग्री (बिटुमेन, गिट्टी, सीमेंट, रेत)', 'मजदूरी (कुशल + अकुशल)', 'मशीनरी और उपकरण', 'ओवरहेड (निगरानी, परीक्षण, आकस्मिक)', 'कुल'],
+    corruptItems: [['30% धनराशि बर्बाद हो तो', 'बर्बाद'], ['20% घटिया सामग्री प्रयोग', 'की कटौती'], ['पूर्ण बजट पर सड़क जीवन', '10-15 साल'], ['30% कटौती पर सड़क जीवन', '2-4 साल']],
+    rtiTemplate: (name, district, road, dept, total, len, wid, type) => `सेवा में,
+जन सूचना अधिकारी
+${dept || '[विभाग का नाम]'}
+${district || '[जिला]'}
+
+विषय: सड़क निर्माण कार्य से संबंधित सूचना हेतु RTI आवेदन
+
+महोदय/महोदया,
+
+मैं ${name || '[आपका नाम]'}, निवासी ${district || '[जिला]'}, सूचना का अधिकार अधिनियम 2005 की धारा 6(1) के अंतर्गत निम्नलिखित सूचनाएं प्राप्त करना चाहता/चाहती हूं:
+
+सड़क का विवरण: ${road || '[सड़क का नाम/स्थान]'}
+लंबाई: ${len} किमी | चौड़ाई: ${wid} मीटर | प्रकार: ${type}
+
+मांगी गई सूचनाएं:
+1. उपरोक्त सड़क के टेंडर की कुल स्वीकृत राशि क्या है?
+2. टेंडर किस ठेकेदार को और किस दर पर दिया गया?
+3. प्रयुक्त सामग्री की मात्रा और दर का विवरण दें।
+4. कार्य की गुणवत्ता जांच रिपोर्ट प्रदान करें।
+5. कार्य पूर्ण होने की निर्धारित तिथि क्या थी?
+
+नोट: हमारे अनुमान के अनुसार इस सड़क की उचित लागत लगभग ${total} होनी चाहिए।
+
+आवेदक: ${name || '[आपका नाम]'}
+दिनांक: ${new Date().toLocaleDateString('hi-IN')}
+
+संलग्न: ₹10 का IPO/DD (शुल्क)`
+  },
+  en: {
+    'h-title': 'Road Cost Calculator',
+    'h-sub': 'MORTH/PWD Rates 2024-25 • Transparent Estimates',
+    'hero-title': 'Road Construction Cost Transparency',
+    'hero-desc': 'Fight corruption — know exactly how much your area\'s road should actually cost. Accurate estimates based on official government rates.',
+    'hb1': '✅ MORTH 2024-25 Rates', 'hb2': '✅ RTI Template', 'hb3': '✅ PDF Download', 'hb4': '✅ Completely Free',
+    'form-title': '📐 Enter Road Details',
+    'lbl-len': 'Length (km)', 'lbl-wid': 'Width (metres)', 'lbl-type': 'Road Type',
+    'lbl-terrain': 'Terrain Type', 'lbl-state': 'State / Region', 'lbl-drain': 'Drainage / Culverts',
+    'opt-wbm': 'WBM / Gravel Road (Rural)', 'opt-b2': 'Bituminous 2-Lane (Standard)',
+    'opt-b4': 'Bituminous 4-Lane (Highway)', 'opt-c2': 'Concrete 2-Lane', 'opt-c4': 'Concrete 4-Lane',
+    'opt-urban': 'Urban CC Road (with drain + footpath)',
+    'opt-plain': 'Plain / Flat', 'opt-rolling': 'Semi-hilly / Rolling', 'opt-hilly': 'Hilly / Difficult',
+    'opt-north': 'North India (UP, Bihar, Haryana, Punjab)', 'opt-south': 'South India (TN, AP, Karnataka, Kerala)',
+    'opt-west': 'West India (Maharashtra, Gujarat, Rajasthan)', 'opt-east': 'East India (WB, Odisha, Jharkhand)',
+    'opt-ne': 'North East / J&K / Hill States',
+    'opt-dnone': 'None', 'opt-dbasic': 'Basic Side Drains', 'opt-dfull': 'Full Drainage + Culverts',
+    'rl-total': 'Total Estimated Cost', 'rl-perkm': 'Cost per km', 'rl-persqm': 'Cost per sq. metre',
+    'ct-breakdown': '📊 Cost Breakdown', 'ct-chart': '🥧 Cost Distribution', 'ct-corrupt': '⚠️ Corruption Risk Indicators',
+    'corrupt-title': '⚠️ If funds are misused...',
+    'corrupt-note': 'Citizens can use this estimate to file RTI queries or cross-check government tender documents. If the actual tender amount is 50%+ above this range, it warrants scrutiny.',
+    'btn-pdf': '📄 Download PDF', 'btn-wa': '📱 Share on WhatsApp', 'btn-rti-scroll': '📝 Generate RTI Letter',
+    'ct-rti': '📝 RTI Application Letter', 'rti-title': '🏛️ Fill your details — RTI letter will be ready',
+    'btn-copy-rti': '📋 Copy RTI Letter', 'btn-share-rti': '📱 Share RTI on WhatsApp',
+    'th-item': 'Item', 'th-amount': 'Amount', 'th-pct': 'Share',
+    'footer-text': 'Road Cost Calculator • For a Transparent India • MORTH Rates 2024-25',
+    'disclaimer-text': '<strong>Disclaimer:</strong> Estimates based on 2024-25 MORTH/PWD Schedule of Rates. Actual costs vary by soil conditions, ROW acquisition, utility relocation, and local market rates.',
+    items: ['Material (bitumen, aggregate, cement, sand)', 'Labour (skilled + unskilled)', 'Machinery & Equipment', 'Overhead (supervision, testing, contingency)', 'Total'],
+    corruptItems: [['If 30% funds diverted', 'wasted'], ['If 20% substandard material', 'cut'], ['Road life at full budget', '10-15 years'], ['Road life if 30% cut', '2-4 years']],
+    rtiTemplate: (name, district, road, dept, total, len, wid, type) => `To,
+The Public Information Officer
+${dept || '[Department Name]'}
+${district || '[District]'}
+
+Subject: RTI Application for Information Regarding Road Construction Work
+
+Sir/Madam,
+
+I, ${name || '[Your Name]'}, resident of ${district || '[District]'}, under Section 6(1) of the Right to Information Act 2005, hereby request the following information:
+
+Road Details: ${road || '[Road Name/Location]'}
+Length: ${len} km | Width: ${wid} m | Type: ${type}
+
+Information Requested:
+1. What is the total approved tender amount for the above road?
+2. To which contractor was the tender awarded and at what rate?
+3. Please provide details of quantity and rate of materials used.
+4. Provide the quality inspection report for the work.
+5. What was the scheduled completion date for this work?
+
+Note: As per our estimate, the fair cost for this road should be approximately ${total}.
+
+Applicant: ${name || '[Your Name]'}
+Date: ${new Date().toLocaleDateString('en-IN')}
+
+Enclosure: IPO/DD of ₹10 (Fee)`
+  }
+};
+
+let lang = 'hi';
+let currentData = {};
+let pieChartInstance = null;
+
+const RTI_PLACEHOLDERS = {
+  hi: { name: 'आपका नाम', district: 'जिला', road: 'सड़क का नाम / स्थान', dept: 'विभाग (PWD / NHAI / अन्य)' },
+  en: { name: 'Your Name', district: 'District', road: 'Road name / location', dept: 'Department (PWD / NHAI / Other)' }
+};
+
+function setLang(l) {
+  lang = l;
+  document.getElementById('btn-hi').classList.toggle('active', l === 'hi');
+  document.getElementById('btn-en').classList.toggle('active', l === 'en');
+  document.documentElement.lang = l === 'hi' ? 'hi' : 'en';
+  const t = T[l];
+  Object.keys(t).forEach(k => {
+    const el = document.getElementById(k);
+    if (el && typeof t[k] === 'string') {
+      if (k === 'disclaimer-text') el.innerHTML = t[k];
+      else el.textContent = t[k];
+    }
+  });
+  // Update RTI input placeholders
+  const ph = RTI_PLACEHOLDERS[l];
+  document.getElementById('rti-name').placeholder     = ph.name;
+  document.getElementById('rti-district').placeholder = ph.district;
+  document.getElementById('rti-road').placeholder     = ph.road;
+  document.getElementById('rti-dept').placeholder     = ph.dept;
+  if (currentData.total) renderResults(currentData);
+  generateRTI();
+}
+
+// ==================== CALCULATION ====================
+const ROAD_BASE = {
+  wbm:       { min: 30, max: 45 },
+  bitumin2l: { min: 300, max: 500 },
+  bitumin4l: { min: 600, max: 1000 },
+  concrete2l:{ min: 500, max: 700 },
+  concrete4l:{ min: 800, max: 1300 },
+  urban:     { min: 1000, max: 2000 },
+};
+const ROAD_NAMES = {
+  wbm: { hi: 'WBM/गिट्टी सड़क', en: 'WBM/Gravel Road' },
+  bitumin2l: { hi: 'बिटुमिनस 2-लेन', en: 'Bituminous 2-Lane' },
+  bitumin4l: { hi: 'बिटुमिनस 4-लेन', en: 'Bituminous 4-Lane' },
+  concrete2l: { hi: 'कंक्रीट 2-लेन', en: 'Concrete 2-Lane' },
+  concrete4l: { hi: 'कंक्रीट 4-लेन', en: 'Concrete 4-Lane' },
+  urban: { hi: 'शहरी CC सड़क', en: 'Urban CC Road' },
+};
+const TERRAIN_MULT = { plain: 1.0, rolling: 1.18, hilly: 1.40 };
+const STATE_MULT   = { north: 1.0, south: 1.05, west: 1.08, east: 0.95, ne: 1.25 };
+const DRAIN_ADD    = { none: 0, basic: 0.08, full: 0.20 };
+const STD_W = { wbm: 5, bitumin2l: 7, bitumin4l: 28, concrete2l: 7, concrete4l: 28, urban: 20 };
+const PCTS  = [0.55, 0.25, 0.12, 0.08];
+const COLORS = ['#1a56db','#057a55','#b45309','#6b7280'];
+
+function fmt(n) {
+  if (n >= 1e7) return '₹' + (n/1e7).toFixed(2) + ' Cr';
+  if (n >= 1e5) return '₹' + (n/1e5).toFixed(2) + ' Lakh';
+  return '₹' + Math.round(n).toLocaleString('en-IN');
+}
+
+function calculate() {
+  const len     = parseFloat(document.getElementById('length').value) || 2;
+  const wid     = parseFloat(document.getElementById('width').value) || 7;
+  const rt      = document.getElementById('roadtype').value;
+  const terrain = document.getElementById('terrain').value;
+  const state   = document.getElementById('state').value;
+  const drain   = document.getElementById('drainage').value;
+
+  const base = ROAD_BASE[rt];
+  const wf   = wid / STD_W[rt];
+  const rate = ((base.min + base.max) / 2) * 1e5 * wf * TERRAIN_MULT[terrain] * STATE_MULT[state] * (1 + DRAIN_ADD[drain]);
+  const total = rate * len;
+  const minT  = base.min * 1e5 * wf * TERRAIN_MULT[terrain] * STATE_MULT[state] * (1 + DRAIN_ADD[drain]) * len;
+  const maxT  = base.max * 1e5 * wf * TERRAIN_MULT[terrain] * STATE_MULT[state] * (1 + DRAIN_ADD[drain]) * len;
+  const vals  = PCTS.map(p => Math.round(total * p));
+  const area  = Math.round(len * 1000 * wid);
+
+  currentData = { total, minT, maxT, vals, len, wid, rt, area };
+  document.getElementById('results-section').style.display = 'block';
+  renderResults(currentData);
+  generateRTI();
+
+}
+
+function renderResults(d) {
+  const t = T[lang];
+  const { total, minT, maxT, vals, len, wid, rt, area } = d;
+  const grandTotal = vals.reduce((a, b) => a + b, 0);
+
+  document.getElementById('rv-total').textContent  = fmt(grandTotal);
+  document.getElementById('rs-range').textContent  = `${fmt(minT)} – ${fmt(maxT)}`;
+  document.getElementById('rv-perkm').textContent  = fmt(grandTotal / len);
+  document.getElementById('rs-roadname').textContent = ROAD_NAMES[rt][lang];
+  document.getElementById('rv-persqm').textContent = fmt(grandTotal / area);
+  document.getElementById('rs-area').textContent   = `${lang==='hi'?'क्षेत्र':'Area'}: ${area.toLocaleString('en-IN')} ${lang==='hi'?'वर्ग मी':'sq.m'}`;
+
+  // Breakdown table
+  const tbody = document.getElementById('breakdown-body');
+  tbody.innerHTML = '';
+  t.items.slice(0, 4).forEach((name, i) => {
+    const pct = Math.round(PCTS[i] * 100);
+    tbody.innerHTML += `<tr>
+      <td>
+        <div>${name}</div>
+        <div class="bar" style="width:${pct}%;background:${COLORS[i]}"></div>
+      </td>
+      <td class="right">${fmt(vals[i])}</td>
+      <td class="right" style="color:var(--gray-400);font-size:12px">${pct}%</td>
+    </tr>`;
+  });
+  tbody.innerHTML += `<tr>
+    <td>${t.items[4]}</td>
+    <td class="right">${fmt(grandTotal)}</td>
+    <td class="right" style="color:var(--gray-400);font-size:12px">100%</td>
+  </tr>`;
+
+  // Pie chart
+  if (pieChartInstance) pieChartInstance.destroy();
+  const ctx = document.getElementById('pieChart').getContext('2d');
+  pieChartInstance = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: t.items.slice(0, 4),
+      datasets: [{ data: vals, backgroundColor: COLORS, borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: {
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 10, boxWidth: 12 } } },
+      cutout: '55%'
+    }
+  });
+
+  // Corruption box
+  const cr = Math.round(grandTotal * 0.30);
+  const qr = Math.round(grandTotal * 0.20);
+  const cdata = [[t.corruptItems[0][0], fmt(cr) + ' ' + t.corruptItems[0][1]],
+                 [t.corruptItems[1][0], fmt(qr) + ' ' + t.corruptItems[1][1]],
+                 [t.corruptItems[2][0], t.corruptItems[2][1]],
+                 [t.corruptItems[3][0], t.corruptItems[3][1]]];
+  document.getElementById('corrupt-grid').innerHTML = cdata.map(([a, b]) =>
+    `<div class="citem"><span>${a}</span><span><strong>${b}</strong></span></div>`).join('');
+}
+
+// ==================== RTI ====================
+function generateRTI() {
+  const name     = document.getElementById('rti-name').value;
+  const district = document.getElementById('rti-district').value;
+  const road     = document.getElementById('rti-road').value;
+  const dept     = document.getElementById('rti-dept').value;
+  const total    = currentData.total ? fmt(currentData.total) : '[राशि]';
+  const len      = document.getElementById('length').value || '—';
+  const wid      = document.getElementById('width').value || '—';
+  const rt       = document.getElementById('roadtype').value;
+  const typeName = ROAD_NAMES[rt][lang];
+  document.getElementById('rti-output').textContent = T[lang].rtiTemplate(name, district, road, dept, total, len, wid, typeName);
+}
+
+function copyRTI() {
+  const text = document.getElementById('rti-output').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('btn-copy-rti');
+    const orig = btn.textContent;
+    btn.textContent = lang === 'hi' ? '✅ कॉपी हो गया!' : '✅ Copied!';
+    setTimeout(() => btn.textContent = orig, 2000);
+  });
+}
+
+function shareWhatsApp() {
+  if (!currentData.total) return;
+  const total = fmt(currentData.total);
+  const len   = document.getElementById('length').value;
+  const wid   = document.getElementById('width').value;
+  const rt    = ROAD_NAMES[document.getElementById('roadtype').value][lang];
+  const msg = lang === 'hi'
+    ? `🛣️ *सड़क लागत अनुमान*\n\nसड़क: ${rt}\nलंबाई: ${len} किमी | चौड़ाई: ${wid} मीटर\n\n*अनुमानित लागत: ${total}*\n\nMORTH 2024-25 दरों के आधार पर। अपने क्षेत्र की सड़क की लागत जांचें 👇\n[sadakcost.in]`
+    : `🛣️ *Road Cost Estimate*\n\nRoad: ${rt}\nLength: ${len} km | Width: ${wid} m\n\n*Estimated Cost: ${total}*\n\nBased on MORTH 2024-25 rates. Check road cost in your area 👇\n[sadakcost.in]`;
+  window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+}
+
+function shareRTIWhatsApp() {
+  const text = document.getElementById('rti-output').textContent;
+  window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+}
+
+// ==================== PDF (Print Page) ====================
+function downloadPDF() {
+  if (!currentData.total) { alert(lang === 'hi' ? 'पहले कैलकुलेट करें' : 'Please calculate first'); return; }
+  const { vals, len, wid, rt, minT, maxT } = currentData;
+  const grandTotal = vals.reduce((a, b) => a + b, 0);
+  const typeName   = ROAD_NAMES[rt][lang];
+  const date       = new Date().toLocaleDateString('hi-IN');
+  const t          = T[lang];
+  const isHi       = lang === 'hi';
+  const cr         = fmt(Math.round(grandTotal * 0.30));
+  const qr         = fmt(Math.round(grandTotal * 0.20));
+
+  const itemLabels = t.items.slice(0, 4);
+  const pcts       = [55, 25, 12, 8];
+  const colors     = ['#1a56db','#057a55','#b45309','#6b7280'];
+
+  const rows = itemLabels.map((label, i) => `
+    <tr>
+      <td>${label}</td>
+      <td style="text-align:right">${fmt(vals[i])}</td>
+      <td style="text-align:right;color:#888">${pcts[i]}%</td>
+      <td style="width:80px"><div style="height:8px;border-radius:4px;background:${colors[i]};width:${pcts[i]}%"></div></td>
+    </tr>`).join('') + `
+    <tr style="font-weight:700;background:#f3f4f6">
+      <td>${isHi ? 'कुल योग' : 'Grand Total'}</td>
+      <td style="text-align:right;color:#1a56db">${fmt(grandTotal)}</td>
+      <td style="text-align:right">100%</td>
+      <td></td>
+    </tr>`;
+
+  const html = `<!DOCTYPE html>
+<html lang="${isHi ? 'hi' : 'en'}">
+<head>
+<meta charset="UTF-8">
+<title>${isHi ? 'सड़क लागत रिपोर्ट' : 'Road Cost Report'}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans Devanagari', 'Segoe UI', sans-serif; color: #111; background: white; padding: 32px; font-size: 13px; line-height: 1.7; }
+  .header { background: #1a56db; color: white; padding: 20px 24px; border-radius: 10px; margin-bottom: 20px; }
+  .header h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .header p { font-size: 11px; opacity: 0.85; }
+  .badge-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .badge { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.35); border-radius: 20px; padding: 2px 10px; font-size: 11px; }
+  .cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 18px; }
+  .card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 16px; }
+  .card.main { background: #ebf0ff; border-color: #c3d3f9; }
+  .card .label { font-size: 11px; color: #6b7280; margin-bottom: 4px; }
+  .card .value { font-size: 20px; font-weight: 700; color: #1a56db; }
+  .card .sub { font-size: 10px; color: #9ca3af; margin-top: 2px; }
+  .section { margin-bottom: 18px; }
+  .section h2 { font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  td, th { padding: 8px 10px; border-bottom: 1px solid #f3f4f6; }
+  th { color: #6b7280; font-weight: 500; font-size: 11px; }
+  .corrupt { background: #fde8e8; border: 1px solid #f5c6c6; border-radius: 10px; padding: 14px 16px; margin-bottom: 18px; }
+  .corrupt h2 { font-size: 13px; font-weight: 600; color: #c81e1e; margin-bottom: 10px; }
+  .corrupt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; color: #c81e1e; }
+  .corrupt-item { display: flex; justify-content: space-between; border-bottom: 1px solid #f5c6c6; padding: 4px 0; }
+  .disclaimer { background: #f9fafb; border-radius: 8px; padding: 10px 14px; font-size: 11px; color: #9ca3af; line-height: 1.6; }
+  .print-btn { position: fixed; top: 16px; right: 16px; background: #1a56db; color: white; border: none; border-radius: 8px; padding: 10px 20px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  @media print { .print-btn { display: none; } body { padding: 16px; } }
+</style>
+</head>
+<body>
+<button class="print-btn" onclick="window.print()">${isHi ? '🖨️ PDF Save करें' : '🖨️ Save as PDF'}</button>
+
+<div class="header">
+  <h1>${isHi ? '🛣️ सड़क लागत रिपोर्ट' : '🛣️ Road Cost Report'}</h1>
+  <p>${isHi ? `MORTH/PWD अनुसूची दरें 2024-25 • दिनांक: ${date}` : `MORTH/PWD Schedule of Rates 2024-25 • Date: ${date}`}</p>
+  <div class="badge-row">
+    <span class="badge">${typeName}</span>
+    <span class="badge">${isHi ? `लंबाई: ${len} किमी` : `Length: ${len} km`}</span>
+    <span class="badge">${isHi ? `चौड़ाई: ${wid} मीटर` : `Width: ${wid} m`}</span>
+  </div>
+</div>
+
+<div class="cards">
+  <div class="card main">
+    <div class="label">${isHi ? 'कुल अनुमानित लागत' : 'Total Estimated Cost'}</div>
+    <div class="value">${fmt(grandTotal)}</div>
+    <div class="sub">${fmt(minT)} – ${fmt(maxT)}</div>
+  </div>
+  <div class="card">
+    <div class="label">${isHi ? 'प्रति किमी लागत' : 'Cost per km'}</div>
+    <div class="value" style="font-size:17px;color:#111">${fmt(grandTotal / len)}</div>
+    <div class="sub">${typeName}</div>
+  </div>
+  <div class="card">
+    <div class="label">${isHi ? 'प्रति वर्ग मीटर' : 'Per sq. metre'}</div>
+    <div class="value" style="font-size:17px;color:#111">${fmt(grandTotal / (len * 1000 * wid))}</div>
+    <div class="sub">${isHi ? `क्षेत्र: ${Math.round(len*1000*wid).toLocaleString()} वर्ग मी` : `Area: ${Math.round(len*1000*wid).toLocaleString()} sq.m`}</div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>${isHi ? 'लागत विवरण' : 'Cost Breakdown'}</h2>
+  <table>
+    <thead><tr>
+      <th>${isHi ? 'मद' : 'Item'}</th>
+      <th style="text-align:right">${isHi ? 'राशि' : 'Amount'}</th>
+      <th style="text-align:right">${isHi ? 'हिस्सा' : 'Share'}</th>
+      <th></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+</div>
+
+<div class="corrupt">
+  <h2>${isHi ? '⚠️ भ्रष्टाचार जोखिम संकेतक' : '⚠️ Corruption Risk Indicators'}</h2>
+  <div class="corrupt-grid">
+    <div class="corrupt-item"><span>${isHi ? '30% धन बर्बाद हो तो' : 'If 30% diverted'}</span><span><strong>${cr} ${isHi ? 'बर्बाद' : 'wasted'}</strong></span></div>
+    <div class="corrupt-item"><span>${isHi ? '20% घटिया सामग्री' : '20% substandard material'}</span><span><strong>${qr} ${isHi ? 'की कटौती' : 'cut'}</strong></span></div>
+    <div class="corrupt-item"><span>${isHi ? 'पूर्ण बजट पर सड़क जीवन' : 'Road life at full budget'}</span><span><strong>${isHi ? '10-15 साल' : '10-15 years'}</strong></span></div>
+    <div class="corrupt-item"><span>${isHi ? '30% कटौती पर सड़क जीवन' : 'Road life if 30% cut'}</span><span><strong>${isHi ? '2-4 साल' : '2-4 years'}</strong></span></div>
+  </div>
+  <p style="font-size:11px;margin-top:10px;">${isHi ? 'अगर वास्तविक टेंडर राशि इस अनुमान से 50% अधिक हो तो RTI दाखिल करें।' : 'If actual tender is 50%+ above this estimate, file an RTI application.'}</p>
+</div>
+
+<div class="disclaimer">
+  <strong>${isHi ? 'अस्वीकरण:' : 'Disclaimer:'}</strong> ${isHi ? 'यह अनुमान MORTH/PWD अनुसूची दरों 2024-25 पर आधारित है। वास्तविक लागत भिन्न हो सकती है। कोई भी औपचारिक शिकायत से पहले राज्य PWD SOR से सत्यापित करें।' : 'Estimates based on MORTH/PWD SOR 2024-25. Actual costs may vary by soil conditions, terrain and local rates. Verify with official PWD SOR before formal complaints.'}
+</div>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+}
+
+// ==================== INIT ====================
+document.querySelectorAll('input, select').forEach(el => el.addEventListener('input', calculate));
+calculate();
+</script>
+</body>
+</html>
